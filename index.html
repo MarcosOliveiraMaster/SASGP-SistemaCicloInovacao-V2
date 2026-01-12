@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-br" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <title>SAS GP - Modo Escuro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <style>
+        body { background-color: #0b0b0b; color: #e5e7eb; }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #ea580c; border-radius: 10px; }
+    </style>
+</head>
+<body class="flex flex-col h-screen">
+
+    <!-- Header -->
+    <header class="flex items-center justify-between px-8 py-4 bg-[#121212] border-b border-orange-900/30">
+        <div class="flex items-center gap-6">
+            <h1 class="text-2xl font-black tracking-tighter text-orange-500">SAS <span class="text-white">GP</span></h1>
+            
+            <label class="group flex items-center gap-2 cursor-pointer bg-orange-600 hover:bg-orange-500 text-white px-5 py-2 rounded-lg transition-all shadow-lg shadow-orange-900/20">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                <span class="text-sm font-bold uppercase tracking-wider">Adicionar Arquivo</span>
+                <input type="file" id="pdfInput" accept="application/pdf" class="hidden">
+            </label>
+        </div>
+
+        <!-- Barra de Progresso de Caracteres -->
+        <div class="w-64">
+            <div class="flex justify-between text-[10px] uppercase mb-1 font-bold text-orange-400">
+                <span>Leitura de Contexto</span>
+                <span id="charCount">0 / 15.000</span>
+            </div>
+            <div class="w-full bg-gray-800 rounded-full h-1.5 border border-gray-700">
+                <div id="progressBar" class="bg-orange-500 h-1.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Chat -->
+    <main id="chatWindow" class="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar max-w-5xl mx-auto w-full">
+        <div class="border-l-4 border-orange-600 bg-[#1a1a1a] p-6 rounded-r-xl">
+            <h2 class="text-orange-500 font-bold mb-1 text-lg">Sistema Pronto</h2>
+            <p class="text-gray-400 text-sm">Aguardando upload de PDF para análise contextual.</p>
+        </div>
+    </main>
+
+    <!-- Footer Input -->
+    <footer class="p-8 bg-[#0b0b0b]">
+        <div class="max-w-5xl mx-auto relative group">
+            <textarea id="userInput" rows="1" placeholder="Perguntar ao SAS GP..." 
+                class="w-full bg-[#1a1a1a] text-white p-5 pr-20 rounded-2xl border border-gray-800 focus:border-orange-600 outline-none resize-none transition-all shadow-2xl"></textarea>
+            <button id="sendBtn" class="absolute right-4 bottom-4 p-3 bg-orange-600 text-white rounded-xl hover:bg-orange-500 transition-all active:scale-95 shadow-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+            </button>
+        </div>
+    </footer>
+
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        let pdfTextContext = "";
+        const LIMIT = 15000;
+
+        document.getElementById('pdfInput').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function() {
+                const typedarray = new Uint8Array(this.result);
+                const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                let fullText = "";
+
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const text = await page.getTextContent();
+                    fullText += text.items.map(s => s.str).join(" ") + " ";
+                    
+                    // Atualiza Barra de Progresso
+                    let currentLength = Math.min(fullText.length, LIMIT);
+                    let percent = (currentLength / LIMIT) * 100;
+                    document.getElementById('progressBar').style.width = percent + "%";
+                    document.getElementById('charCount').innerText = `${currentLength.toLocaleString()} / 15.000`;
+                    
+                    if (fullText.length >= LIMIT) break;
+                }
+                pdfTextContext = fullText.substring(0, LIMIT);
+                addMessage('assistant', `Arquivo <b>${file.name}</b> processado. O SAS GP está pronto para responder.`);
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        async function handleSend() {
+            const input = document.getElementById('userInput');
+            const text = input.value.trim();
+            if (!text || !pdfTextContext) return;
+
+            addMessage('user', text);
+            input.value = "";
+
+            try {
+                const formData = new FormData();
+                formData.append('question', text);
+                formData.append('context', pdfTextContext);
+
+                const response = await fetch('http://localhost:8000/ask', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                addMessage('assistant', data.answer);
+            } catch (err) {
+                addMessage('assistant', "Erro: Certifique-se que o backend Python está rodando.");
+            }
+        }
+
+        function addMessage(role, msg) {
+            const win = document.getElementById('chatWindow');
+            const div = document.createElement('div');
+            div.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in duration-500`;
+            div.innerHTML = `
+                <div class="${role === 'user' ? 'bg-orange-600 text-white' : 'bg-[#222] text-gray-200 border border-gray-800'} p-4 rounded-2xl max-w-[85%] shadow-xl">
+                    <div class="text-xs font-bold mb-1 uppercase opacity-50">${role === 'user' ? 'Você' : 'SAS GP'}</div>
+                    <div class="leading-relaxed">${msg}</div>
+                </div>
+            `;
+            win.appendChild(div);
+            win.scrollTop = win.scrollHeight;
+        }
+
+        document.getElementById('sendBtn').onclick = handleSend;
+        
+        // Permitir envio com Enter
+        document.getElementById('userInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+            }
+        });
+    </script>
+</body>
+</html>

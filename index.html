@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SASGP - Sistema de Gestão do Ciclo de Inovação. Gerencie projetos de inovação do início ao fim.">
+    <meta name="keywords" content="gestão, inovação, projetos, ciclo de inovação, SASGP">
+    <meta name="author" content="SASGP Team">
+    <title>SASGP - Sistema de Gestão do Ciclo de Inovação</title>
+    
+    <!-- Estilos -->
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div>
+                    <h1>🚀 SASGP</h1>
+                    <p class="header-subtitle">Sistema de Gestão do Ciclo de Inovação</p>
+                </div>
+                <div class="header-actions">
+                    <button id="exportBtn" class="btn btn-success" title="Exportar dados em JSON">
+                        <span class="btn-icon">💾</span> Exportar
+                    </button>
+                    <button id="importBtn" class="btn btn-secondary" title="Importar dados de JSON">
+                        <span class="btn-icon">📂</span> Importar
+                    </button>
+                    <button id="clearDataBtn" class="btn btn-danger" title="Limpar todos os dados">
+                        <span class="btn-icon">🗑️</span> Limpar Dados
+                    </button>
+                    <input type="file" id="importFile" accept=".json" style="display: none;">
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Dashboard -->
+            <section class="dashboard">
+                <h2>📊 Dashboard</h2>
+                <div class="stats-grid" id="dashboardStats">
+                    <!-- Estatísticas serão inseridas aqui via JavaScript -->
+                </div>
+            </section>
+
+            <!-- Formulário de Cadastro/Edição -->
+            <section class="form-section">
+                <h2 id="formTitle">📝 Cadastrar Novo Projeto</h2>
+                <form id="projectForm">
+                    <div class="form-grid">
+                        <!-- Nome do Projeto -->
+                        <div class="form-group full-width">
+                            <label for="projectName">Nome do Projeto *</label>
+                            <input 
+                                type="text" 
+                                id="projectName" 
+                                name="projectName" 
+                                placeholder="Digite o nome do projeto"
+                                required
+                            >
+                        </div>
+
+                        <!-- Descrição -->
+                        <div class="form-group full-width">
+                            <label for="projectDescription">Descrição</label>
+                            <textarea 
+                                id="projectDescription" 
+                                name="projectDescription" 
+                                placeholder="Descreva os objetivos e escopo do projeto"
+                                rows="4"
+                            ></textarea>
+                        </div>
+
+                        <!-- Responsável -->
+                        <div class="form-group">
+                            <label for="projectResponsible">Responsável</label>
+                            <input 
+                                type="text" 
+                                id="projectResponsible" 
+                                name="projectResponsible" 
+                                placeholder="Nome do responsável"
+                            >
+                        </div>
+
+                        <!-- Data de Início -->
+                        <div class="form-group">
+                            <label for="projectStartDate">Data de Início</label>
+                            <input 
+                                type="date" 
+                                id="projectStartDate" 
+                                name="projectStartDate"
+                            >
+                        </div>
+
+                        <!-- Data de Conclusão -->
+                        <div class="form-group">
+                            <label for="projectEndDate">Data Prevista de Conclusão</label>
+                            <input 
+                                type="date" 
+                                id="projectEndDate" 
+                                name="projectEndDate"
+                            >
+                        </div>
+
+                        <!-- Fase do Ciclo -->
+                        <div class="form-group">
+                            <label for="projectPhase">Fase do Ciclo</label>
+                            <select id="projectPhase" name="projectPhase">
+                                <option value="Ideação">💡 Ideação</option>
+                                <option value="Validação">✓ Validação</option>
+                                <option value="Prototipagem">🔧 Prototipagem</option>
+                                <option value="Implementação">⚙️ Implementação</option>
+                                <option value="Avaliação">📊 Avaliação</option>
+                            </select>
+                        </div>
+
+                        <!-- Status -->
+                        <div class="form-group">
+                            <label for="projectStatus">Status</label>
+                            <select id="projectStatus" name="projectStatus">
+                                <option value="Em Andamento">🚀 Em Andamento</option>
+                                <option value="Concluído">✅ Concluído</option>
+                                <option value="Pausado">⏸️ Pausado</option>
+                                <option value="Cancelado">❌ Cancelado</option>
+                            </select>
+                        </div>
+
+                        <!-- Tags/Categorias -->
+                        <div class="form-group full-width">
+                            <label for="projectTags">Tags/Categorias (separadas por vírgula)</label>
+                            <input 
+                                type="text" 
+                                id="projectTags" 
+                                name="projectTags" 
+                                placeholder="Ex: inovação, tecnologia, digital"
+                            >
+                        </div>
+                    </div>
+
+                    <!-- Ações do Formulário -->
+                    <div class="form-actions">
+                        <button type="submit" id="submitBtn" class="btn btn-primary">
+                            <span class="btn-icon">✅</span> Criar Projeto
+                        </button>
+                        <button type="button" id="cancelBtn" class="btn btn-secondary" style="display: none;">
+                            <span class="btn-icon">❌</span> Cancelar
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Controles e Filtros -->
+            <section class="controls-section">
+                <div class="controls-grid">
+                    <!-- Busca -->
+                    <div class="search-box">
+                        <input 
+                            type="text" 
+                            id="searchInput" 
+                            placeholder="Buscar projetos por nome, descrição, responsável ou tags..."
+                        >
+                    </div>
+
+                    <!-- Filtro de Fase -->
+                    <div class="form-group">
+                        <label for="phaseFilter">Filtrar por Fase</label>
+                        <select id="phaseFilter">
+                            <option value="all">Todas as Fases</option>
+                            <option value="Ideação">💡 Ideação</option>
+                            <option value="Validação">✓ Validação</option>
+                            <option value="Prototipagem">🔧 Prototipagem</option>
+                            <option value="Implementação">⚙️ Implementação</option>
+                            <option value="Avaliação">📊 Avaliação</option>
+                        </select>
+                    </div>
+
+                    <!-- Filtro de Status -->
+                    <div class="form-group">
+                        <label for="statusFilter">Filtrar por Status</label>
+                        <select id="statusFilter">
+                            <option value="all">Todos os Status</option>
+                            <option value="Em Andamento">🚀 Em Andamento</option>
+                            <option value="Concluído">✅ Concluído</option>
+                            <option value="Pausado">⏸️ Pausado</option>
+                            <option value="Cancelado">❌ Cancelado</option>
+                        </select>
+                    </div>
+
+                    <!-- Filtro de Responsável -->
+                    <div class="form-group">
+                        <label for="responsibleFilter">Filtrar por Responsável</label>
+                        <select id="responsibleFilter">
+                            <option value="all">Todos os Responsáveis</option>
+                            <!-- Opções serão preenchidas dinamicamente -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Toggle de Visualização -->
+                <div class="view-toggle mt-lg">
+                    <button id="gridViewBtn" class="btn btn-secondary active">
+                        <span class="btn-icon">▦</span> Grade
+                    </button>
+                    <button id="tableViewBtn" class="btn btn-secondary">
+                        <span class="btn-icon">☰</span> Lista
+                    </button>
+                </div>
+            </section>
+
+            <!-- Lista de Projetos -->
+            <section id="projectsContainer">
+                <!-- Projetos serão renderizados aqui via JavaScript -->
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 SASGP - Sistema de Gestão do Ciclo de Inovação. Desenvolvido com ❤️ usando Vanilla JavaScript.</p>
+            <p style="margin-top: 0.5rem; font-size: 0.875rem; opacity: 0.8;">
+                💡 Sistema 100% client-side | 🚀 Sem dependências externas | 💾 Dados salvos localmente
+            </p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="assets/js/storage.js"></script>
+    <script src="assets/js/utils.js"></script>
+    <script src="assets/js/components.js"></script>
+    <script src="assets/js/app.js"></script>
+</body>
+</html>

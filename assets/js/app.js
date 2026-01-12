@@ -412,7 +412,8 @@ class InnovationApp {
     const project = this.projects.find(p => p.id === projectId);
     if (!project) return;
     
-    if (confirm(`Tem certeza que deseja excluir o projeto "${project.title}"?`)) {
+    const sanitizedTitle = Utils.sanitizeHTML(project.title);
+    if (confirm(`Tem certeza que deseja excluir o projeto "${sanitizedTitle}"?`)) {
       this.projects = this.projects.filter(p => p.id !== projectId);
       Storage.saveProjects(this.projects);
       Components.showNotification('Projeto excluído com sucesso!', 'success');

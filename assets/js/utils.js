@@ -9,7 +9,7 @@ const Utils = {
    * @returns {string} Unique identifier
    */
   generateId() {
-    return 'proj-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    return 'proj-' + Date.now() + '-' + Math.random().toString(36).substring(2, 11);
   },
 
   /**
@@ -88,7 +88,7 @@ const Utils = {
         const searchLower = filters.search.toLowerCase();
         const matchesTitle = project.title.toLowerCase().includes(searchLower);
         const matchesDescription = project.description.toLowerCase().includes(searchLower);
-        const matchesTags = project.tags.some(tag => tag.toLowerCase().includes(searchLower));
+        const matchesTags = project.tags && Array.isArray(project.tags) && project.tags.some(tag => tag.toLowerCase().includes(searchLower));
         
         if (!matchesTitle && !matchesDescription && !matchesTags) {
           return false;
